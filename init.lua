@@ -17,7 +17,9 @@ euthamia.substrate_score_base = 9 -- base for amount that summed substrate score
 euthamia.seed_sprout_threshold = 4 -- a seed must have a final rolled + bolstered survival value higher than this to sprout. Out of 10.
 euthamia.growth_threshold = 118 -- similar to above, but not
 euthamia.crops = {modn..":fibers"}
+euthamia.sounds = {"grass_rustle1","grass_rustle2"}
 for n = 1, #euthamia.stages do
+    local isyoung = n < 5 
     local nodename = modn..":euthamia"..n
     register_node(nodename, {
         description = 'euthamia tier'..n,
@@ -38,8 +40,9 @@ for n = 1, #euthamia.stages do
         groups = {snappy = 1, choppy = 1, oddly_breakable_by_hand = 1, euthamia = 6, euthamia_pollen = n == 5 and 1 or 0, flammable = 2, green = 2},
         on_ignite = "nc_fire:ash_lump",
         drop = "",
+        sounds = nodecore.sounds(euthamia.sounds[isyoung and 1 or 2]),
         after_dig_node = function(pos)
-            local fibrecount = n < 5 and n or 1
+            local fibrecount = isyoung and n or 1
             euthamia.harvest(pos,euthamia.crops[1],fibrecount+math.random(2))
         end
     })
