@@ -1,27 +1,30 @@
 local modn = minetest.get_current_modname()
 local modp = minetest.get_modpath(modn)
-local register_node = minetest.register_node
 euthamia = {}
 dofile(modp.."/particle.lua")
-local function say(a) local b = type(a); minetest.chat_send_all(b == "string" and a or minetest.serialize(a)) end
-euthamia.stages = {1,2,3,4,5,6,7}
+
+euthamia.stages = {1,2,3,4,5,6,7} -- plant stages. (should only remain as a table if; NB* color variants? petals?)
 euthamia.stagetimes = {6,4,2,2,18,14,19} -- added to chance value per growth stage/level, higher influences faster growth
-euthamia.substrates = {["nc_terrain:dirt"] = 2, ["nc_terrain:dirt_with_grass"] = 1, ["nc_tree:humus"] = 4,["nc_tree:peat"] = 3,["nc_lode:block_annealed"] = -2, ["nc_fire:coal8"] = - 4}
+euthamia.substrates = {["nc_terrain:dirt"] = 2,["nc_terrain:dirt_loose"] = 2, ["nc_terrain:dirt_with_grass"] = 1, ["nc_tree:humus"] = 4,["nc_tree:peat"] = 3,["nc_lode:block_annealed"] = -2, ["nc_fire:coal8"] = -4}
 euthamia.substrate_names = {}
+
 for k,_ in pairs(euthamia.substrates) do
-    table.insert(euthamia.substrate_names,k)
+    table.insert(euthamia.substrate_names,k) -- named table should always have all entries with scores.
 end
+
 euthamia.substrates_mapgen = {"nc_terrain:dirt_with_grass","nc_terrain:dirt"} -- used to specify mapgen decoration placement
 euthamia.root_radius = 1 -- base radius offset to x and y axes used in area substrate check (absolute value).
 euthamia.substrate_score_base = 9 -- base for amount that summed substrate scores are divided by (evaluates to 1 for 9x9 grass).
 euthamia.seed_sprout_threshold = 4 -- a seed must have a final rolled + bolstered survival value higher than this to sprout. Out of 10.
 euthamia.growth_threshold = 118 -- similar to above, but not
-euthamia.crops = {modn..":fibers"}
+euthamia.crops = {modn..":fibres"}
 euthamia.sounds = {"grass_rustle1","grass_rustle2"}
+
+
 for n = 1, #euthamia.stages do
-    local isyoung = n < 5 
+    local isyoung = n < 5
     local nodename = modn..":euthamia"..n
-    register_node(nodename, {
+    minetest.register_node(nodename, {
         description = 'euthamia tier'..n,
         drawtype = "plantlike",
         waving = 1,
@@ -37,7 +40,7 @@ for n = 1, #euthamia.stages do
                 {-6 / 16, -0.5, -6 / 16, 6 / 16, -3 / 16, 6 / 16},
             },
         },
-        groups = {snappy = 1, choppy = 1, oddly_breakable_by_hand = 1, euthamia = 6, euthamia_pollen = n == 5 and 1 or 0, flammable = 2, green = 2},
+        groups = {snappy = 1, choppy = 1, cracky = 1, crumbly = 1, oddly_breakable_by_hand = 1, euthamia = 6, euthamia_pollen = n == 5 and 1 or 0, flammable = 2, green = 2},
         on_ignite = "nc_fire:ash_lump",
         drop = "",
         sounds = nodecore.sounds(euthamia.sounds[isyoung and 1 or 2]),
@@ -47,10 +50,11 @@ for n = 1, #euthamia.stages do
         end
     })
 
-minetest.register_decoration({
-    deco_type = "simple",
-    place_on = euthamia.substrates_mapgen,
-    sidelen = 16,
+    minetest.register_decoration({
+        deco_type = "simple",
+        name = "euthamia_mapgen"..n,
+        place_on = euthamia.substrates_mapgen,
+        sidelen = 16,
         noise_params = n < 5 and
         {
             offset = -0.002,
@@ -60,57 +64,55 @@ minetest.register_decoration({
             octaves = (n == 1) and 3 or 4,
             persist = 0.4,
             lacunarity = 2,
-            flags = "absvalue"
         }
         or
         {
-			offset = -0.004,
-			scale = 0.016,
-			spread = {x = 136, y = 80, z = 145},
-			seed = 17,
-			octaves = 3,
-			persist = 0.66
-		},
-    biomes = "unknown",
-    y_min = -15,
-    y_max = 60,
-    spawn_by = {"group:soil"},
-    num_spawn_by = 8,
-    decoration = modn..":euthamia"..n,
-    height = 1,
-    height_max = 0,
-    param2 = 1,
-    param2_max = 4,
-    place_offset_y = 0,
-})
+            offset = -0.004,
+            scale = 0.016,
+            spread = {x = 136, y = 80, z = 145},
+            seed = 17,
+            octaves = 3,
+            persist = 0.66
+        },
+        biomes = "unknown",
+        y_min = -15,
+        y_max = 60,
+        spawn_by = euthamia.substrates_mapgen,
+        num_spawn_by = 8,
+        decoration = modn..":euthamia"..n,
+        height = 1,
+        height_max = 0,
+        param2 = 2,
+        param2_max = 4,
+        place_offset_y = 0,
+    })
 end
 
+--  --  --  SEED
 minetest.register_craftitem(modn..":seed",{
     description = "Tiny Seed",
     inventory_image = "euthamia_seed.png",
     wield_scale = {x = 0.4, y = 0.4, z = 0.4},
     stack_max = 16,
+    groups = {euthamia = 1}
 })
-minetest.register_craftitem(euthamia.crops[1],{
-    description = "Sinewy Fibres",
-    inventory_image = "euthamia_fibre_bundle.png",
-    stack_max = 16,
-})
+
+
 nodecore.register_aism({
     label = "euthamia seed sprout",
-    interval = 1,
-    chance = 1,
+    interval = 12,
+    chance = 4,
     itemnames = {modn .. ":seed"},
     action = function(stack,data)
         local pos = data.pos
         if(pos)then
             local is_sealed = minetest.get_item_group(minetest.get_node(pos).name,"silica") > 0 -- if in a glass/sand container
             if(not is_sealed)then
-                local substrate_score = euthamia.check_substrate(pos) and euthamia.check_substrate_area(pos) or 0
+                local is_on_substrate = euthamia.check_substrate(pos)
+                local substrate_score = euthamia.check_substrate_area(pos) or 0
                 local chance = math.random(10) + substrate_score/euthamia.substrate_score_base -- soil contributes here (typically up to a max of 1 in nature for now)
-                local name_repl = chance > euthamia.seed_sprout_threshold and modn..":euthamia1" or "air"
+                local name_repl = chance > euthamia.seed_sprout_threshold and is_on_substrate and modn..":euthamia1" or "air"
                 minetest.set_node(pos, {name = name_repl})
-                say("I placed "..name_repl)
             end
         end
     end
@@ -120,24 +122,34 @@ nodecore.register_aism({
 --  --  Core Data Manip functions
 euthamia.substrate_add = function(name,value) -- Adds a node as a recognized substrate with a score of value
     if(name)then
-    table.insert(euthamia.substrate_names,name)
-    euthamia.substrates[name] = value or 0
-    end
+        table.insert(euthamia.substrate_names,name)
+        euthamia.substrates[name] = value or 0
 end
-euthamia.substrate_add("nc_fire:ash",4)
+end
+euthamia.substrate_add("nc_fire:ash",4) -- test
 
 
 
---  --  Plant Behavior functions
+--  --  --  --  --  Plant Behavior
+
+--  --  --  SELF
 euthamia.check_own_vibe = function(pos) -- Checks for the existence of a euthamia plant at pos.
     return minetest.get_item_group(minetest.get_node(pos).name,"euthamia") > 0
 end
 
-euthamia.check = euthamia.check_own_vibe -- same as euthamia.check_own_vibe, second assignment.
+euthamia.check = euthamia.check_own_vibe -- same as euthamia.check_own_vibe, second ref.
 
-euthamia.plant_grow = function(pos,lv)
-    lv = lv and (lv < #euthamia.stages and lv + 1 or 1)
+euthamia.wither = function(pos) -- kills plant at position
+    if(pos and euthamia.check(pos))then
+        minetest.remove_node(pos)
+end
+end
+
+--  --  --  GROWTH
+euthamia.plant_grow = function(pos,lv) -- causes plant at pos to be replaced by it's older stage.
+    lv = lv and (lv < #euthamia.stages and lv + 1) or 1
     minetest.set_node(pos, {name = modn..":euthamia"..lv, param2 = math.random(4)})
+    return lv > 1
 end
 
 euthamia.check_growth = function(pos) -- returns the growth level of the plant if present
@@ -147,27 +159,22 @@ euthamia.check_growth = function(pos) -- returns the growth level of the plant i
     return lv
 end
 
-euthamia.wither = function(pos) -- kills plant at position
-    if(pos and euthamia.check(pos))then
-    minetest.remove_node(pos)
-    end
-end
-
-euthamia.check_light = function(pos)
+--  --  --  VITAL REQUIREMENTS (soil, light, nutrition) (NB *add water, deeper nutrition calc)
+euthamia.check_light = function(pos) -- returns true if pos is sufficiently lit. Values will be smaller than minetest.get_node_light.
     local light = pos and nodecore.get_node_light(pos)
     return light and light > 10
 end
 
 euthamia.check_substrate = function(pos) -- Checks node below pos and returns only positive substrate score
     if(pos)then
-    local name_below = pos and minetest.get_node({x = pos.x, y = pos.y - 1, z = pos.z}).name
-    local found = name_below and euthamia.substrates[name_below]
+        local name_below = pos and minetest.get_node({x = pos.x, y = pos.y - 1, z = pos.z}).name
+        local found = name_below and euthamia.substrates[name_below]
         return found and found > 0 and found
-    end
+end
 end
 
-euthamia.check_vitals = function(pos)
-    return pos and euthamia.check_own_vibe(pos) and euthamia.check_light(pos) and euthamia.check_substrate(pos) 
+euthamia.check_vitals = function(pos) -- wraps together vital plant functions for full check in one call.
+    return pos and euthamia.check_own_vibe(pos) and euthamia.check_light(pos) and euthamia.check_substrate(pos)
 end
 
 euthamia.check_substrate_area = function(pos, r) --  Checks a y-slice underneath pos, returns substrate score(int)
@@ -188,10 +195,10 @@ euthamia.check_substrate_area = function(pos, r) --  Checks a y-slice underneath
         local function sum_substrate_score(names)
             local sum = 0
             if(names and type(names) == "table")then
-            for n = 1, #names do
-                local score = names[n] and euthamia.substrates[names[n]] or 0
-                sum = sum + score
-            end
+                for n = 1, #names do
+                    local score = names[n] and euthamia.substrates[names[n]] or 0
+                    sum = sum + score
+                end
             end
             return sum
         end
@@ -200,6 +207,8 @@ euthamia.check_substrate_area = function(pos, r) --  Checks a y-slice underneath
         return score
     end
 end
+
+--  --  --  REPRODUCTION
 
 euthamia.reproduce = function(pos) -- "i reproduced." - pelta 2021
     local stack = ItemStack({name = modn..":seed"})
@@ -212,12 +221,28 @@ euthamia.reproduce = function(pos) -- "i reproduced." - pelta 2021
             local fickle_seed_cull = math.random(96-substrate_score) -- variable sets the upper limit for random draw
             fickle_seed_cull = math.random(100) < fickle_seed_cull and -2 or 0  -- true means to cull 2 seeds, otherwise no. (drawing higher means safety from seed cull)
             seed_score = seed_score + fickle_seed_cull
-        return seed_score
+            return seed_score
         end
     end
-    nodecore.item_eject(pos, stack, math.random(4), math.random(seed_score()), {x = math.random(-2,2)+0.5, y = math.random(-2,2)+1, z = math.random(-2,2)+0.5})
+    nodecore.item_eject(pos, stack, math.random(4), math.random(seed_score()), {x = math.random(-2,2)+0.5, y = math.random(2)+2, z = math.random(-2,2)+0.5})
     euthamia.wither(pos)
 end
+
+--  --  --  HARVESTING
+minetest.register_node(euthamia.crops[1],{
+    description = "Sinewy Fibres",
+    inventory_image = "euthamia_fibre_bundle.png",
+    tiles = {"euthamia_fibre_bundle.png"},
+    stack_max = 16,
+    paramtype = "light",
+    sunlight_propagates = true,
+    walkable = false,
+    floodable = true,
+    drawtype = "plantlike",
+    sounds = nodecore.sounds(euthamia.sounds[1]),
+    groups = {euthamia_crop = 1, flammable = 2, green = 2, oddly_breakable_by_hand = 1, snappy = 1, choppy = 1, falling_node = 1, falling_repose = 1},
+    on_ignite = "nc_fire:ash_lump"
+})
 
 euthamia.harvest = function(pos,crop,lv)
     if(pos and crop and lv)then
@@ -225,42 +250,55 @@ euthamia.harvest = function(pos,crop,lv)
     end
 end
 
+--  --  -- Active Behaviour
 minetest.register_abm(
-{
-    label = "Grass Logic",
-    nodenames = {"group:euthamia"},
-    interval = 3.0,
-    chance = 35,
-    catch_up = true,
-    action = function(pos, node)
-        if(euthamia.check_vitals(pos))then
-            local lv = euthamia.check_growth(pos)
-            local gt = euthamia.growth_threshold
-            local gf = euthamia.check_substrate_area(pos) -- soil contribution to growth
-            local growth_stage_offset = euthamia.stagetimes[lv]
-            local chance = math.random(gt)+(growth_stage_offset*(gt/100))+(gf/2) -- Hardcoded values here to be reevaluated.
-            if(chance > gt and lv ~= 7)then
-                euthamia.plant_grow(pos,lv)
-            elseif(chance > gt and lv == 7 )then
-                euthamia.reproduce(pos)
-                say("I reproduced")
+    {
+        label = "Grass Logic",
+        nodenames = {"group:euthamia"},
+        interval = 4,
+        chance = 35,
+        catch_up = true,
+        action = function(pos)
+            if(euthamia.check_vitals(pos))then
+                local lv = euthamia.check_growth(pos)
+                local gt = euthamia.growth_threshold
+                local gf = euthamia.check_substrate_area(pos) -- soil contribution to growth
+                local growth_stage_offset = euthamia.stagetimes[lv] -- stagetimes to contribute slightly so that grassy plants have a lower chance of progressing.
+                local chance = math.random(gt)+(growth_stage_offset*(gt/100))+(gf/2) -- Hardcoded values here to be reevaluated.
+                if(chance > gt and lv ~= 7)then
+                    euthamia.plant_grow(pos,lv)
+                elseif(chance > gt)then
+                    euthamia.reproduce(pos)
+                end
+            else euthamia.wither(pos) end
+        end
+    })
+
+
+minetest.register_abm(
+    {
+        label = "Sporulating Blossoms",
+        nodenames = {"group:euthamia_pollen"},
+        interval = 5.0,
+        chance = 10,
+        catch_up = false,
+        action = function(pos)
+            local wind = {x = math.random(-1,1), y = 0.2, z = math.random(-1,1)} -- random values selected for wind vector to make things a little interesting.
+            local wind_speed = math.random()
+            euthamia.spore_distribute(pos,wind,wind_speed)
+        end
+    })
+
+
+--  --  --  --  --  Compatibility
+
+local function force_place_default_nc_trees() -- without this, nodecore tree decorations fight with grass decoration, trees somehow always lose.
+    minetest.after(1, function()
+        for k,v in pairs(minetest.registered_decorations)do
+            if(v.deco_type == "schematic")then
+                v.flags = v.flags..", force_placement"
             end
-        else euthamia.wither(pos) end
-    end
-})
-
-
-minetest.register_abm(
-{
-    label = "Sporulating Blossoms",
-    nodenames = {"group:euthamia_pollen"},
-    interval = 3.0,
-    chance = 3,
-    catch_up = false,
-    action = function(pos, node)
-        local wind = {x = math.random(-1,1), y = 0.2, z = math.random(-1,1)}
-        local wind_speed = math.random()
-        euthamia.spore_distribute(pos,wind,wind_speed)
-    end
-})
-
+        end
+    end)
+end
+force_place_default_nc_trees()
