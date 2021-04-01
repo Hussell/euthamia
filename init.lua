@@ -15,9 +15,9 @@ end
 euthamia.substrates_mapgen = {"nc_terrain:dirt_with_grass","nc_terrain:dirt"} -- used to specify mapgen decoration placement
 euthamia.root_radius = 1 -- base radius offset to x and y axes used in area substrate check (absolute value).
 euthamia.substrate_score_base = 9 -- base for amount that summed substrate scores are divided by (evaluates to 1 for 9x9 grass).
-euthamia.seed_sprout_threshold = 4 -- a seed must have a final rolled + bolstered survival value higher than this to sprout. Out of 10.
+euthamia.seed_sprout_threshold = 3 -- a seed must have a final rolled + bolstered survival value higher than this to sprout. Out of 10.
 euthamia.growth_threshold = 118 -- similar to above, but not
-euthamia.crops = {modn..":fibres"}
+euthamia.crops = {modn..":fibres"} -- harvestable crop items (NB* petals, seeds, ichor)
 euthamia.sounds = {"grass_rustle1","grass_rustle2"}
 
 
@@ -60,7 +60,7 @@ for n = 1, #euthamia.stages do
             offset = -0.002,
             scale = n < 2 and 0.038 or 0.042,
             spread = {x = 60, y = 60, z = 60},
-            seed = 91,
+            seed = 26,
             octaves = (n == 1) and 3 or 4,
             persist = 0.4,
             lacunarity = 2,
@@ -78,7 +78,7 @@ for n = 1, #euthamia.stages do
         y_min = -15,
         y_max = 60,
         spawn_by = euthamia.substrates_mapgen,
-        num_spawn_by = 8,
+        num_spawn_by = 7,
         decoration = modn..":euthamia"..n,
         height = 1,
         height_max = 0,
@@ -100,7 +100,7 @@ minetest.register_craftitem(modn..":seed",{
 
 nodecore.register_aism({
     label = "euthamia seed sprout",
-    interval = 12,
+    interval = 32,
     chance = 4,
     itemnames = {modn .. ":seed"},
     action = function(stack,data)
@@ -309,8 +309,8 @@ nodecore.register_limited_abm(
 end
 force_place_default_nc_trees()]]
 
-local function prepare_for_winter()
-    minetest.after(1, function()
+local function prepare_for_winter() -- convenience conversion of euthamia fibers to nc_nature:plant_fibers
+    minetest.after(1,function()
         if(minetest.registered_items["nc_nature:plant_fibers"])then
             minetest.register_alias_force(modn..":fibres","nc_nature:plant_fibers")
         end
