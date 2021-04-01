@@ -25,7 +25,7 @@ for n = 1, #euthamia.stages do
     local isyoung = n < 5
     local nodename = modn..":euthamia"..n
     minetest.register_node(nodename, {
-        description = 'euthamia tier'..n,
+        description = "euthamia",
         drawtype = "plantlike",
         waving = 1,
         paramtype = "light",
@@ -40,7 +40,7 @@ for n = 1, #euthamia.stages do
                 {-6 / 16, -0.5, -6 / 16, 6 / 16, -3 / 16, 6 / 16},
             },
         },
-        groups = {snappy = 1, choppy = 1, cracky = 1, crumbly = 1, oddly_breakable_by_hand = 1, euthamia = 6, euthamia_pollen = n == 5 and 1 or 0, flammable = 2, green = 2},
+        groups = {snappy = 1,crumbly = 1, attached_node = 1, flora = 1, euthamia = n, euthamia_pollen = n == 5 and 1 or 0, flammable = 2, green = 2},
         on_ignite = "nc_fire:ash_lump",
         drop = "",
         sounds = nodecore.sounds(euthamia.sounds[isyoung and 1 or 2]),
@@ -60,7 +60,7 @@ for n = 1, #euthamia.stages do
             offset = -0.002,
             scale = n < 2 and 0.038 or 0.042,
             spread = {x = 60, y = 60, z = 60},
-            seed = 34,
+            seed = 91,
             octaves = (n == 1) and 3 or 4,
             persist = 0.4,
             lacunarity = 2,
@@ -94,7 +94,7 @@ minetest.register_craftitem(modn..":seed",{
     inventory_image = "euthamia_seed.png",
     wield_scale = {x = 0.4, y = 0.4, z = 0.4},
     stack_max = 16,
-    groups = {euthamia = 1}
+    groups = {euthamia = 1, seedy = 1, flammable = 2, green = 2},
 })
 
 
@@ -124,7 +124,7 @@ euthamia.substrate_add = function(name,value) -- Adds a node as a recognized sub
     if(name)then
         table.insert(euthamia.substrate_names,name)
         euthamia.substrates[name] = value or 0
-end
+    end
 end
 euthamia.substrate_add("nc_fire:ash",4) -- test
 
@@ -142,7 +142,7 @@ euthamia.check = euthamia.check_own_vibe -- same as euthamia.check_own_vibe, sec
 euthamia.wither = function(pos) -- kills plant at position
     if(pos and euthamia.check(pos))then
         minetest.remove_node(pos)
-end
+    end
 end
 
 --  --  --  GROWTH
@@ -170,7 +170,7 @@ euthamia.check_substrate = function(pos) -- Checks node below pos and returns on
         local name_below = pos and minetest.get_node({x = pos.x, y = pos.y - 1, z = pos.z}).name
         local found = name_below and euthamia.substrates[name_below]
         return found and found > 0 and found
-end
+    end
 end
 
 euthamia.check_vitals = function(pos) -- wraps together vital plant functions for full check in one call.
@@ -229,18 +229,12 @@ euthamia.reproduce = function(pos) -- "i reproduced." - pelta 2021
 end
 
 --  --  --  HARVESTING
-minetest.register_node(euthamia.crops[1],{
-    description = "Sinewy Fibres",
+minetest.register_craftitem(euthamia.crops[1],{
+    description = "Grass Bundle",
     inventory_image = "euthamia_fibre_bundle.png",
-    tiles = {"euthamia_fibre_bundle.png"},
     stack_max = 16,
-    paramtype = "light",
-    sunlight_propagates = true,
-    walkable = false,
-    floodable = true,
-    drawtype = "plantlike",
     sounds = nodecore.sounds(euthamia.sounds[1]),
-    groups = {euthamia_crop = 1, flammable = 2, green = 2, oddly_breakable_by_hand = 1, snappy = 1, choppy = 1, falling_node = 1, falling_repose = 1},
+    groups = {euthamia_crop = 1, flammable = 2, green = 2, oddly_breakable_by_hand = 1, snappy = 1},
     on_ignite = "nc_fire:ash_lump"
 })
 
@@ -250,8 +244,20 @@ euthamia.harvest = function(pos,crop,lv)
     end
 end
 
+nodecore.register_craft({
+    label = "grind euthamia fibres to peat",
+    action = "pummel",
+    toolgroups = {crumbly = 3},
+    nodes = {
+        {
+            match = {name = modn..":fibres", count = 8},
+            replace = "nc_tree:peat"
+        }
+    }
+})
+
 --  --  -- Active Behaviour
-minetest.register_abm(
+nodecore.register_limited_abm(
     {
         label = "Grass Logic",
         nodenames = {"group:euthamia"},
@@ -275,7 +281,7 @@ minetest.register_abm(
     })
 
 
-minetest.register_abm(
+nodecore.register_limited_abm(
     {
         label = "Sporulating Blossoms",
         nodenames = {"group:euthamia_pollen"},
@@ -292,7 +298,7 @@ minetest.register_abm(
 
 --  --  --  --  --  Compatibility
 
-local function force_place_default_nc_trees() -- without this, nodecore tree decorations fight with grass decoration, trees somehow always lose.
+--[[local function force_place_default_nc_trees() -- without this, nodecore tree decorations and grass decoration fight, trees somehow always lose.
     minetest.after(1, function()
         for k,v in pairs(minetest.registered_decorations)do
             if(v.deco_type == "schematic")then
@@ -301,4 +307,13 @@ local function force_place_default_nc_trees() -- without this, nodecore tree dec
         end
     end)
 end
-force_place_default_nc_trees()
+force_place_default_nc_trees()]]
+
+local function prepare_for_winter()
+    minetest.after(1, function()
+        if(minetest.registered_items["nc_nature:plant_fibers"])then
+            minetest.register_alias_force(modn..":fibres","nc_nature:plant_fibers")
+        end
+    end)
+end
+prepare_for_winter()
