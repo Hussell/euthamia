@@ -1,8 +1,10 @@
+-- luacheck: globals euthamia minetest _ nodecore vector
+
 local modn = minetest.get_current_modname()
 euthamia.spore_distribute = function(pos,dir,mag)
-    if(euthamia.check(pos))then
-        local dir = dir or {x = 0, y = 0, z = 0}
-        local mag = mag or 1
+    if(pos and euthamia.check(pos))then
+        dir = dir or {x = 0, y = 0, z = 0}
+        mag = mag or 1
         local bas = {x = 1, y = 1, z = 1}
         minetest.add_particlespawner({
             amount = 16,

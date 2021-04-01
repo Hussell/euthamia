@@ -1,3 +1,5 @@
+-- luacheck: globals euthamia minetest _ ItemStack nodecore
+
 local modn = minetest.get_current_modname()
 local modp = minetest.get_modpath(modn)
 euthamia = {}
@@ -103,7 +105,7 @@ nodecore.register_aism({
     interval = 32,
     chance = 4,
     itemnames = {modn .. ":seed"},
-    action = function(stack,data)
+    action = function(data)
         local pos = data.pos
         if(pos)then
             local is_sealed = minetest.get_item_group(minetest.get_node(pos).name,"silica") > 0 -- if in a glass/sand container
@@ -212,7 +214,7 @@ end
 
 euthamia.reproduce = function(pos) -- "i reproduced." - pelta 2021
     local stack = ItemStack({name = modn..":seed"})
-    local function seed_score()
+    local function calc_seed_score()
         local substrate_score = euthamia.check_substrate_area(pos,euthamia.root_radius)
         if(substrate_score)then
             local seed_score = 4
@@ -224,7 +226,7 @@ euthamia.reproduce = function(pos) -- "i reproduced." - pelta 2021
             return seed_score
         end
     end
-    nodecore.item_eject(pos, stack, math.random(4), math.random(seed_score()), {x = math.random(-2,2)+0.5, y = math.random(2)+2, z = math.random(-2,2)+0.5})
+    nodecore.item_eject(pos, stack, math.random(4), math.random(calc_seed_score()), {x = math.random(-2,2)+0.5, y = math.random(2)+2, z = math.random(-2,2)+0.5})
     euthamia.wither(pos)
 end
 
