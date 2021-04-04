@@ -299,23 +299,18 @@ nodecore.register_limited_abm(
 
 
 --  --  --  --  --  Compatibility
-
---[[local function force_place_default_nc_trees() -- without this, nodecore tree decorations and grass decoration fight, trees somehow always lose.
-    minetest.after(1, function()
-        for k,v in pairs(minetest.registered_decorations)do
-            if(v.deco_type == "schematic")then
-                v.flags = v.flags..", force_placement"
-            end
+local function force_place_default_nc_trees() -- without this, nodecore tree decorations and grass decoration fight, trees somehow always lose.
+    for k,v in pairs(minetest.registered_decorations)do
+        if(v.schematic == nodecore.tree_schematic and v.flags)then
+            v.flags = v.flags..", force_placement"
         end
-    end)
+    end
 end
-force_place_default_nc_trees()]]
+force_place_default_nc_trees()
 
 local function prepare_for_winter() -- convenience conversion of euthamia fibers to nc_nature:plant_fibers
-    minetest.after(1,function()
-        if(minetest.registered_items["nc_nature:plant_fibers"])then
-            minetest.register_alias_force(modn..":fibres","nc_nature:plant_fibers")
-        end
-    end)
+    if(minetest.registered_items["nc_nature:plant_fibers"])then
+        minetest.register_alias_force(modn..":fibres","nc_nature:plant_fibers")
+    end
 end
 prepare_for_winter()
