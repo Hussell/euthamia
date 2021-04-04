@@ -17,7 +17,7 @@ end
 euthamia.substrates_mapgen = {"nc_terrain:dirt_with_grass","nc_terrain:dirt"} -- used to specify mapgen decoration placement
 euthamia.root_radius = 1 -- base radius offset to x and y axes used in area substrate check (absolute value).
 euthamia.substrate_score_base = 9 -- base for amount that summed substrate scores are divided by (evaluates to 1 for 9x9 grass).
-euthamia.seed_sprout_threshold = 3 -- a seed must have a final rolled + bolstered survival value higher than this to sprout. Out of 10.
+euthamia.seed_sprout_threshold = 4 -- a seed must have a final rolled + bolstered survival value higher than this to sprout. Out of 10.
 euthamia.growth_threshold = 118 -- similar to above, but not
 euthamia.crops = {modn..":fibres"} -- harvestable crop items (NB* petals, seeds, ichor)
 euthamia.sounds = {"grass_rustle1","grass_rustle2"}
@@ -76,7 +76,7 @@ for n = 1, #euthamia.stages do
             octaves = 3,
             persist = 0.66
         },
-        biomes = "unknown",
+        biomes = {"unknown","grassland","forest","floodland"},
         y_min = -15,
         y_max = 60,
         spawn_by = euthamia.substrates_mapgen,
@@ -97,13 +97,14 @@ minetest.register_craftitem(modn..":seed",{
     wield_scale = {x = 0.4, y = 0.4, z = 0.4},
     stack_max = 16,
     groups = {euthamia = 1, seedy = 1, flammable = 2, green = 2},
+    on_ignite = "nc_fire:lump_ash"
 })
 
 
 nodecore.register_aism({
     label = "euthamia seed sprout",
-    interval = 16,
-    chance = 4,
+    interval = 10,
+    chance = 5,
     itemnames = {modn .. ":seed"},
     action = function(data)
         local pos = data.pos
@@ -237,7 +238,7 @@ minetest.register_craftitem(euthamia.crops[1],{
     stack_max = 16,
     sounds = nodecore.sounds(euthamia.sounds[1]),
     groups = {euthamia_crop = 1, flammable = 2, green = 2, oddly_breakable_by_hand = 1, snappy = 1},
-    on_ignite = "nc_fire:ash_lump"
+    on_ignite = "nc_fire:lump_ash"
 })
 
 euthamia.harvest = function(pos,crop,lv)

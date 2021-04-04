@@ -9,3 +9,5 @@ Harvesting currently only provides fibres (more like foliage than fibres). Some 
 
 Fibres from this plant will be aliased to nc_nature's plant_fiber when both mods are installed.
 
+#### Behaviour Spoilers
+Plant growth and seed production can be influenced a little with better soil or adding some inorganic nutrients.
