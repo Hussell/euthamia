@@ -103,8 +103,8 @@ minetest.register_craftitem(modn..":seed",{
 
 nodecore.register_aism({
     label = "euthamia seed sprout",
-    interval = 10,
-    chance = 5,
+    interval = 9,
+    chance = 4,
     itemnames = {modn .. ":seed"},
     action = function(data)
         local pos = data.pos
@@ -264,8 +264,8 @@ nodecore.register_limited_abm(
     {
         label = "Grass Logic",
         nodenames = {"group:euthamia"},
-        interval = 10,
-        chance = 35,
+        interval = 8,
+        chance = 30,
         catch_up = true,
         action = function(pos)
             if(euthamia.check_vitals(pos))then
