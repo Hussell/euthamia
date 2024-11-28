@@ -106,7 +106,7 @@ nodecore.register_aism({
     interval = 9,
     chance = 4,
     itemnames = {modn .. ":seed"},
-    action = function(data)
+    action = function(stack, data)
         local pos = data.pos
         if(pos)then
             local is_sealed = minetest.get_item_group(minetest.get_node(pos).name,"silica") > 0 -- if in a glass/sand container
